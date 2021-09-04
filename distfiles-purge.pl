@@ -11,13 +11,13 @@ use warnings;
 use strict;
 use sigtrap qw(die INT QUIT TERM);
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-my $directory_distfiles = '/usr/portage/distfiles';
-my $directory_tmp_distfiles = '/var/tmp/portage/distfiles';
-my $ignore_after_numeric = 'alpha|rc|source|src';
-my $patches = 'patch(?:es|set)?|bug';
+my $Q_files_S_dir_distfiles = '/usr/portage/distfiles';
+my $Q_files_S_dir_tmp_distfiles = '/var/tmp/portage/distfiles';
+my $Q_files_S_re_ignore_after_numeric = 'alpha|rc|source|src';
+my $Q_files_S_re_patches = 'patch(?:es|set)?|bug';
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 my @Q_files_I_grep_last_S_last;
-my @files_preserve;
+my @Q_files_S_preserve;
 #===============================================================================
 sub Q_files_I_prepare_name
 {   local $_ = shift;
@@ -51,8 +51,8 @@ sub Q_files_I_sort_split
 sub Q_files_I_sort_I_cmp
 {   my @a_ = Q_files_I_sort_split( Q_files_I_prepare_name( $b ));
     my @b_ = Q_files_I_sort_split( Q_files_I_prepare_name( $a ));
-    my @a__ = grep { $_ =~ /^[a-z]+$/s and $_ !~ /^(?:${ignore_after_numeric})$/s } @a_;
-    my @b__ = grep { $_ =~ /^[a-z]+$/s and $_ !~ /^(?:${ignore_after_numeric})$/s } @b_;
+    my @a__ = grep { $_ =~ /^[a-z]+$/s and $_ !~ /^(?:${Q_files_S_re_ignore_after_numeric})$/s } @a_;
+    my @b__ = grep { $_ =~ /^[a-z]+$/s and $_ !~ /^(?:${Q_files_S_re_ignore_after_numeric})$/s } @b_;
     my $ret =  @a__ <=> @b__;
     return $ret if $ret;
     for( my $i = 0; $i != @a__; $i++ )
@@ -88,7 +88,7 @@ sub Q_files_I_grep_split
                 $i--;
             }
         }elsif( $_[ $i ] !~ /^[a-z]+$/s
-        or $_[ $i ] =~ /^(?:${ignore_after_numeric})$/s
+        or $_[ $i ] =~ /^(?:${Q_files_S_re_ignore_after_numeric})$/s
         )
         {   splice @_, $i, 1;
             $i--;
@@ -131,14 +131,14 @@ sub Q_files_I_grep_patch_I_root_ver
 sub Q_files_I_grep_patch
 {   my $file_root = Q_files_I_prepare_name(shift);
     local @_ = Q_files_I_split( $file_root );
-    my $ret = grep /^(?:${patches})$/, @_;
+    my $ret = grep /^(?:${Q_files_S_re_patches})$/, @_;
     return $ret unless $ret;
     my @root_ver = Q_files_I_grep_patch_I_root_ver( @_ );
     $ret = 1;
-    foreach( @files_preserve )
+    foreach( @Q_files_S_preserve )
     {   my @a = Q_files_I_split( Q_files_I_prepare_name( $_ ));
         my @root_ver_ = Q_files_I_grep_patch_I_root_ver( @a );
-        if( !grep( /^(?:${patches})$/, @a ))
+        if( !grep( /^(?:${Q_files_S_re_patches})$/, @a ))
         {   my $i;
             for( $i = 0; $i != @root_ver and $i != @root_ver_; $i++ )
             {   last if $root_ver[ $i ] ne $root_ver_[ $i ];
@@ -149,18 +149,18 @@ sub Q_files_I_grep_patch
     return $ret;
 }
 #===============================================================================
-chdir $directory_distfiles || die "Cannot change directory to distfiles: $!";
+chdir $Q_files_S_dir_distfiles || die "Cannot change directory to distfiles: $!";
 #-------------------------------------------------------------------------------
 opendir( my $dh, '.' ) || die "Cannot open distfiles directory: $!";
-my @files = grep { !/(?:^\.|\.__download__$)/s } readdir( $dh );
+my @Q_files_S = grep { !/(?:^\.|\.__download__$)/s } readdir( $dh );
 closedir $dh;
-my @checksum_failure = grep( /\._checksum_failure_\.[_0-9a-z]+$/s, @files );
-@files = sort Q_files_I_sort_I_cmp grep { !/\._checksum_failure_\.[_0-9a-z]+$/s } @files;
-@files_preserve = grep { !Q_files_I_grep_last( $_ ) } @files;
+my @Q_files_S_cksum_fail = grep( /\._checksum_failure_\.[_0-9a-z]+$/s, @Q_files_S );
+@Q_files_S = sort Q_files_I_sort_I_cmp grep { !/\._checksum_failure_\.[_0-9a-z]+$/s } @Q_files_S;
+@Q_files_S_preserve = grep { !Q_files_I_grep_last( $_ ) } @Q_files_S;
 @Q_files_I_grep_last_S_last = ();
-@files = grep { Q_files_I_grep_last( $_ ) or Q_files_I_grep_patch( $_ ) } @files;
+@Q_files_S = grep { Q_files_I_grep_last( $_ ) or Q_files_I_grep_patch( $_ ) } @Q_files_S;
 #-------------------------------------------------------------------------------
-unlink @checksum_failure;
-mkdir $directory_tmp_distfiles || die "Cannot create temporary distfiles directory: $!";
-system( 'mv', $_, $directory_tmp_distfiles ) foreach ( @files );
+unlink @Q_files_S_cksum_fail;
+mkdir $Q_files_S_dir_tmp_distfiles || die "Cannot create temporary distfiles directory: $!";
+system( 'mv', $_, $Q_files_S_dir_tmp_distfiles ) foreach ( @Q_files_S );
 #*******************************************************************************
