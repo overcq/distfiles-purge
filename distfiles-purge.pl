@@ -134,7 +134,6 @@ sub Q_files_I_grep_patch
     my $ret = grep /^(?:${Q_files_S_re_patches})$/, @_;
     return $ret unless $ret;
     my @root_ver = Q_files_I_grep_patch_I_root_ver( @_ );
-    $ret = 1;
     foreach( @Q_files_S_preserve )
     {   my @a = Q_files_I_split( Q_files_I_prepare_name( $_ ));
         my @root_ver_ = Q_files_I_grep_patch_I_root_ver( @a );
@@ -162,5 +161,5 @@ my @Q_files_S_cksum_fail = grep( /\._checksum_failure_\.[_0-9a-z]+$/s, @Q_files_
 #-------------------------------------------------------------------------------
 unlink @Q_files_S_cksum_fail;
 mkdir $Q_files_S_dir_tmp_distfiles || die "Cannot create temporary distfiles directory: $!";
-system( 'mv', $_, $Q_files_S_dir_tmp_distfiles ) foreach ( @Q_files_S );
+system( 'mv', $_, $Q_files_S_dir_tmp_distfiles ) foreach( @Q_files_S );
 #*******************************************************************************
