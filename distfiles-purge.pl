@@ -160,6 +160,8 @@ my @Q_files_S_cksum_fail = grep( /\._checksum_failure_\.[_0-9a-z]+$/s, @Q_files_
 @Q_files_S = grep { !Q_files_I_grep_last( $_ ) and !Q_files_I_grep_patch( $_ ) } @Q_files_S;
 #-------------------------------------------------------------------------------
 unlink @Q_files_S_cksum_fail;
-mkdir $Q_files_S_dir_tmp_distfiles or die "Cannot create temporary distfiles directory: $!";
+if( ! -e $Q_files_S_dir_tmp_distfiles )
+{   mkdir $Q_files_S_dir_tmp_distfiles or die "Cannot create temporary distfiles directory: $!";
+}
 system( 'mv', $_, $Q_files_S_dir_tmp_distfiles ) foreach( @Q_files_S );
 #*******************************************************************************
